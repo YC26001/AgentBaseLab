@@ -1,0 +1,6 @@
+{
+  "name": "example-repo",
+  "version": "1.0.0",
+  "description": "A small TypeScript demonstration project",
+  "type": "module"
+}

@@ -1,15 +1,38 @@
+import { describeError, previewText } from "../diagnostics.js";
+import { MAX_THINKING_CHARS } from "../limits.js";
+
 export type Message = {
   role: "system" | "user" | "assistant";
   content: string;
 };
+
+export type ModelResponse = {
+  content: string;
+  thinking: string;
+  thinkingTruncated: boolean;
+};
+
+// Retain bounded partial thinking when the stream fails before completion.
+export class ModelStreamError extends Error {
+  constructor(
+    message: string,
+    public readonly thinking: string,
+    public readonly thinkingTruncated: boolean,
+    options?: ErrorOptions
+  ) {
+    super(message, options);
+    this.name = "ModelStreamError";
+  }
+}
 
 const OLLAMA_URL = "http://localhost:11434/api/chat";
 const MODEL = "gemma4:12b";
 
 export async function callModel(
   messages: Message[],
-  format?: "json"
-): Promise<string> {
+  format?: "json",
+  onThinkingDelta?: (delta: string) => void
+): Promise<ModelResponse> {
   const response = await fetch(OLLAMA_URL, {
     method: "POST",
     headers: {
@@ -18,7 +41,8 @@ export async function callModel(
     body: JSON.stringify({
       model: MODEL,
       messages,
-      stream: false,
+      think: true,
+      stream: true,
       format,
     }),
   });
@@ -29,22 +53,83 @@ export async function callModel(
     );
   }
 
-  const data: unknown = await response.json();
-
-  if (typeof data !== "object" || data === null || !("message" in data)) {
-    throw new Error("Ollama response is missing message");
+  if (!response.body) {
+    throw new Error("Ollama response is missing a stream body");
   }
 
-  const message = data.message;
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let pending = "";
+  let contentBuffer = "";
+  let thinkingBuffer = "";
+  let thinkingTruncated = false;
 
-  if (
-    typeof message !== "object" ||
-    message === null ||
-    !("content" in message) ||
-    typeof message.content !== "string"
-  ) {
-    throw new Error("Ollama response is missing a string message.content");
+  function consume(line: string): boolean {
+    const data: unknown = JSON.parse(line);
+    if (typeof data !== "object" || data === null || Array.isArray(data)) {
+      throw new Error("Ollama stream chunk must be a JSON object");
+    }
+    if ("error" in data) {
+      throw new Error(`Ollama stream error: ${previewText(String(data.error))}`);
+    }
+    if (!("done" in data) || typeof data.done !== "boolean") {
+      throw new Error("Ollama stream chunk is missing a boolean done");
+    }
+    if ("message" in data) {
+      const message = data.message;
+      if (typeof message !== "object" || message === null || Array.isArray(message)) {
+        throw new Error("Ollama stream chunk has an invalid message");
+      }
+      if ("content" in message) {
+        if (typeof message.content !== "string") {
+          throw new Error("Ollama stream message.content must be a string");
+        }
+        contentBuffer += message.content;
+      }
+      if ("thinking" in message) {
+        if (typeof message.thinking !== "string") {
+          throw new Error("Ollama stream message.thinking must be a string");
+        }
+        const delta = message.thinking;
+        const remaining = MAX_THINKING_CHARS - thinkingBuffer.length;
+        thinkingBuffer += delta.slice(0, remaining);
+        thinkingTruncated ||= delta.length > remaining;
+        if (delta.length > 0) onThinkingDelta?.(delta);
+      }
+    } else if (!data.done) {
+      throw new Error("Ollama stream chunk is missing message");
+    }
+    return data.done;
   }
 
-  return message.content;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      pending += done ? decoder.decode() : decoder.decode(value, { stream: true });
+      let newline: number;
+      while ((newline = pending.indexOf("\n")) !== -1) {
+        const line = pending.slice(0, newline).trim();
+        pending = pending.slice(newline + 1);
+        if (line && consume(line)) {
+          return { content: contentBuffer, thinking: thinkingBuffer, thinkingTruncated };
+        }
+      }
+      if (done) {
+        if (pending.trim() && consume(pending.trim())) {
+          return { content: contentBuffer, thinking: thinkingBuffer, thinkingTruncated };
+        }
+        throw new Error("Ollama stream ended before done: true");
+      }
+    }
+  } catch (error) {
+    throw new ModelStreamError(
+      `Ollama stream failed before completion: ${describeError(error)}`,
+      thinkingBuffer,
+      thinkingTruncated,
+      { cause: error }
+    );
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
 }

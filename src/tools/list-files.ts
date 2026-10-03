@@ -2,7 +2,7 @@ import { opendir } from "node:fs/promises";
 import { MAX_LIST_ENTRIES, MAX_TOOL_OUTPUT_BYTES } from "../limits.js";
 import { resolveWorkspacePath } from "./filesystem-path.js";
 
-type FileEntry = {
+export type FileEntry = {
   name: string;
   type: "file" | "directory";
 };

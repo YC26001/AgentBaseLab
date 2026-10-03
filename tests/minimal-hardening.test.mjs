@@ -148,7 +148,7 @@ function mockModel(outputs) {
     requests.push(JSON.parse(options.body));
     const content = outputs[requests.length - 1];
     assert.ok(content !== undefined, "Unexpected extra Model request");
-    return new Response(JSON.stringify({ message: { content } }));
+    return new Response(JSON.stringify({ message: { content }, done: true }) + "\n");
   };
   return requests;
 }
@@ -172,6 +172,7 @@ test("Core returns structured trace, stays silent and preserves observations in 
       assert.deepEqual(result.trace.slice(0, 2).map((entry) => entry.status), ["success", "success"]);
       assert.deepEqual(requests.map((request) => request.messages.length), [2, 4, 6]);
       assert.ok(requests.every((request) => request.format === "json"));
+      assert.ok(requests.every((request) => request.think === true && request.stream === true));
       assert.deepEqual(requests[0].messages[1], { role: "user", content: "Question" });
       for (let index = 0; index < 2; index++) {
         const history = requests[index + 1].messages;

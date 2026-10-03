@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --import tsx tests/minimal-hardening.test.mjs",
+    "test": "node --import tsx --test --test-isolation=none tests/*.test.mjs",
     "agent": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },

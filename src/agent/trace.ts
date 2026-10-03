@@ -1,19 +1,26 @@
-export type ExecutionTraceEntry =
-  | {
+import type { StructuredObservation } from "./observation.js";
+
+export type ExecutionTraceEntry = {
+  thinking?: string;
+  thinkingTruncated?: boolean;
+} & (
+  | ({
       iteration: number;
       type: "tool";
       tool: "list_files" | "read_file";
       input: { path: string };
-      status: "success" | "failure";
-      error?: string;
-    }
+    } & (
+      | { status: "success"; observation: StructuredObservation }
+      | { status: "failure"; error: string }
+    ))
   | { iteration: number; type: "final" }
   | {
       iteration: number;
       type: "error";
       layer: "model" | "action" | "iteration_limit";
       error: string;
-    };
+    }
+);
 
 export type AgentResult = {
   answer: string;

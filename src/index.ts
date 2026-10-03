@@ -1,4 +1,16 @@
 import { runAgent } from "./agent/agent.js";
+import type { ExecutionTraceEntry } from "./agent/trace.js";
+import { describeError, previewText } from "./diagnostics.js";
+
+function displayTrace(entry: ExecutionTraceEntry): void {
+  if (entry.type === "tool") {
+    console.log(`[${entry.iteration}] tool: ${entry.tool} path=${JSON.stringify(previewText(entry.input.path))} ${entry.status}`);
+  } else if (entry.type === "final") {
+    console.log(`[${entry.iteration}] final`);
+  } else {
+    console.error(`[${entry.iteration}] error: ${entry.layer}`);
+  }
+}
 
 const userInput = process.argv.slice(2).join(" ").trim();
 
@@ -7,13 +19,13 @@ if (!userInput) {
   process.exitCode = 1;
 } else {
   try {
-    const answer = await runAgent(userInput);
+    const result = await runAgent(userInput, displayTrace);
     console.log("\n=== 最終回答 ===\n");
-    console.log(answer);
+    console.log(result.answer);
   } catch (error) {
-    console.error("Agent 執行失敗：", error instanceof Error ? error.message : String(error));
+    console.error("Agent 執行失敗：", describeError(error));
     if (error instanceof Error && error.cause instanceof Error) {
-      console.error("原因：", error.cause.message);
+      console.error("原因：", describeError(error.cause));
     }
     process.exitCode = 1;
   }

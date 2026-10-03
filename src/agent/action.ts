@@ -1,3 +1,6 @@
+import { describeError, previewText } from "../diagnostics.js";
+import { validateRelativePath } from "../tools/filesystem-path.js";
+
 export type AgentAction =
   | {
       type: "final";
@@ -19,40 +22,45 @@ export function parseAgentAction(text: string): AgentAction {
   try {
     value = JSON.parse(text);
   } catch (error) {
-    throw new Error("Model output is not valid JSON", { cause: error });
+    throw new Error(
+      `[model_json] Model output is not valid JSON; output: ${JSON.stringify(previewText(text))}`,
+      { cause: error }
+    );
   }
 
-  if (!isRecord(value)) {
-    throw new Error("Agent action must be a JSON object");
-  }
-
-  if (value.type === "final") {
-    if (typeof value.answer !== "string" || value.answer.trim().length === 0) {
-      throw new Error("Final action requires a non-empty string answer");
+  try {
+    if (!isRecord(value)) {
+      throw new Error("Agent action must be a JSON object");
     }
 
-    return { type: "final", answer: value.answer };
-  }
+    if (value.type === "final") {
+      if (typeof value.answer !== "string" || value.answer.trim().length === 0) {
+        throw new Error("Final action requires a non-empty string answer");
+      }
+      return { type: "final", answer: value.answer };
+    }
 
-  if (value.type !== "tool") {
-    throw new Error(`Unsupported action type: ${String(value.type)}`);
-  }
+    if (value.type !== "tool") {
+      throw new Error(`Unsupported action type: ${previewText(String(value.type))}`);
+    }
 
-  if (value.tool !== "list_files" && value.tool !== "read_file") {
-    throw new Error(`Unsupported tool name: ${String(value.tool)}`);
-  }
+    if (value.tool !== "list_files" && value.tool !== "read_file") {
+      throw new Error(`Unsupported tool name: ${previewText(String(value.tool))}`);
+    }
 
-  if (
-    !isRecord(value.input) ||
-    typeof value.input.path !== "string" ||
-    value.input.path.trim().length === 0
-  ) {
-    throw new Error("Tool action requires input.path as a non-empty string");
-  }
+    if (!isRecord(value.input)) {
+      throw new Error("Tool action requires input as a JSON object with path");
+    }
 
-  return {
-    type: "tool",
-    tool: value.tool,
-    input: { path: value.input.path },
-  };
+    return {
+      type: "tool",
+      tool: value.tool,
+      input: { path: validateRelativePath(value.input.path) },
+    };
+  } catch (error) {
+    throw new Error(
+      `[action_validation] ${describeError(error)}; output: ${JSON.stringify(previewText(text))}`,
+      { cause: error }
+    );
+  }
 }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --import tsx tests/minimal-hardening.test.mjs",
     "agent": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },

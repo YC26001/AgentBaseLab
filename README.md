@@ -40,6 +40,9 @@ AgentAction（JSON）
 - **Tool Calling / Tool Dispatch**：依 Model action 執行 `list_files` 或 `read_file`。
 - **Context / Message History**：保留問題、Model action 與 Tool Result，供下一輪 Model 使用。
 - **檔案工具**：列出目錄中的名稱與 file / directory 類型，或讀取 UTF-8 文字檔案。
+- **Workspace Boundary**：拒絕 absolute path、越界相對路徑與指向 workspace 外的 symlink。
+- **大小限制**：`read_file` 最多 64 KiB；`list_files` 最多 200 entries；Tool Result 最多 64 KiB，超限直接拒絕。
+- **Structured Execution Trace**：Core 回傳 `{ answer, trace }`，記錄 action、Tool 成敗與錯誤；CLI 負責顯示。
 - **Iteration Limit**：最多 8 輪 Model 呼叫，超過限制時停止並報錯。
 - **CLI**：接受 command line 問題，顯示簡短 action sequence 與最終回答；失敗時回傳非零 exit code。
 
@@ -63,6 +66,7 @@ AgentAction（JSON）
 ```bash
 npm install
 npm run typecheck
+npm test
 npm run agent -- "分析這個專案主要在做什麼"
 ```
 
@@ -82,16 +86,16 @@ npm run agent -- "這個專案實際會輸出什麼內容？"
 以下是一種可能的流程，實際 Tool 順序、輪數與回答文字由 Model 決定：
 
 ```text
-[1] tool: list_files path=.
-[2] tool: read_file path=README.md
-[3] tool: list_files path=src
-[4] tool: read_file path=src/index.ts
-[5] tool: read_file path=package.json
+[1] tool: list_files path="." success
+[2] tool: read_file path="README.md" success
+[3] tool: list_files path="src" success
+[4] tool: read_file path="src/index.ts" success
+[5] tool: read_file path="package.json" success
 [6] final
 
 === 最終回答 ===
 
-這個測試專案定義了 greet 函式，執行時會印出 Hello, Agent!。
+這個測試專案定義了 greet 函式，執行時會印出 Hello, User!。
 ```
 
 `example-repo/` 是供 Agent 分析的測試 repository，沒有額外安裝 dependencies。
@@ -101,8 +105,8 @@ npm run agent -- "這個專案實際會輸出什麼內容？"
 
 - 目前是 Learning MVP，workspace 固定為 `./example-repo`。
 - Tool 只有 `list_files` 與 `read_file`。
-- 尚未進行完整 Workspace Boundary hardening，包含 symlink 與 path traversal 防護。
+- 已具備基本 path traversal 與 symlink escape 防護，仍不是 production sandbox，未隔離並行 filesystem 變更。
 - Model output 使用 JSON action protocol；Tool Result 暫以標記為 Observation 的 `user` message 回填。
 - 每輪取得完整回應，沒有使用 streaming；Model 或 Tool 出錯時直接停止。
-- CLI 的 action sequence 是簡單 console 輸出，尚未建立 Structured Execution Trace。
+- Structured Execution Trace 儲存在單次執行的記憶體中；成功時回傳，失敗時保留在錯誤物件的 `trace`，不寫入檔案。
 - 本機 Ollama 推論速度依硬體與模型而異。

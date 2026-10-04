@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useAutoFollow } from "../agent/use-auto-follow";
 import { IterationGroup } from "./IterationGroup";
 import { StatusBadge } from "./StatusBadge";
 import type { ExecutionStatus, IterationView } from "./view-types";
@@ -16,6 +17,7 @@ export function ExecutionTrace({
   const [expanded, setExpanded] = useState(true);
   const id = useId();
   const contentId = `${id}-content`;
+  const { anchorRef, following, resume } = useAutoFollow(iterations, expanded && status === "running");
 
   return (
     <section className={styles.trace} aria-labelledby={`${id}-heading`}>
@@ -52,8 +54,12 @@ export function ExecutionTrace({
             />
           ))}
         </ol>
-        {/* Future auto-follow can target this anchor in the document scroll flow. */}
-        <div className={styles.latestExecution} data-latest-execution="" />
+        {status === "running" && !following && (
+          <button type="button" className={`${styles.disclosureButton} ${styles.followButton}`} onClick={resume}>
+            回到最新執行位置 <span aria-hidden="true">↓</span>
+          </button>
+        )}
+        <div ref={anchorRef} className={styles.latestExecution} data-latest-execution="" />
       </div>
     </section>
   );

@@ -12,6 +12,7 @@ export function IterationGroup({
   active: boolean;
 }) {
   const failed = Boolean(iteration.error) || iteration.toolCall?.status === "error";
+  const toolFailed = iteration.toolCall?.status === "error";
 
   return (
     <li className={styles.iteration}>
@@ -25,10 +26,10 @@ export function IterationGroup({
           generating={active && !iteration.toolCall && !failed}
         />
         {iteration.toolCall && <ToolCall tool={iteration.toolCall} />}
-        {iteration.toolCall && !failed && (
+        {iteration.toolCall && !toolFailed && (iteration.observation || !failed) && (
           <div className={styles.connector} aria-hidden="true">↓</div>
         )}
-        {iteration.observation && !failed ? (
+        {iteration.observation && !toolFailed ? (
           <Observation observation={iteration.observation} />
         ) : iteration.toolCall?.status === "running" && !failed ? (
           <div className={styles.observation}>

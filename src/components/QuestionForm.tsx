@@ -12,12 +12,16 @@ const recommendedQuestions = [
 type QuestionFormProps = {
   availability: "pending" | "ready" | "busy";
   running: boolean;
+  submitting?: boolean;
+  notice?: string;
   onRun?: (question: string) => void;
 };
 
 export function QuestionForm({
   availability,
   running,
+  submitting = false,
+  notice,
   onRun,
 }: QuestionFormProps) {
   const [question, setQuestion] = useState("");
@@ -25,16 +29,20 @@ export function QuestionForm({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const inputId = `${id}-question`;
   const helpId = `${id}-help`;
-  const locked = running || availability === "busy";
+  const locked = submitting || running || availability === "busy";
   const integrationPending = availability === "pending" || !onRun;
   const canRun = !locked && !integrationPending && question.trim().length > 0;
-  const help = running
-    ? "Agent 執行中，可在下方查看執行軌跡。"
-    : availability === "busy"
-      ? "Agent 忙碌中，請等候目前的執行結束。"
-      : integrationPending
-        ? "目前尚未開放即時執行，你可以先準備問題。"
-        : "Agent 會使用唯讀工具分析固定的示範 Repository。";
+  const help = notice ?? (
+    submitting
+      ? "正在連線 Agent Core…"
+      : running
+        ? "Agent 執行中，可在下方查看執行軌跡。"
+        : availability === "busy"
+          ? "Agent 忙碌中，請等候目前的執行結束。"
+          : integrationPending
+            ? "目前尚未開放即時執行，你可以先準備問題。"
+            : "Agent 會使用唯讀工具分析固定的示範 Repository。"
+  );
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

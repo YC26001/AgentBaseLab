@@ -437,6 +437,18 @@
   scroll-margin-block: 2rem;
 }
 
+.followButton {
+  position: sticky;
+  bottom: 1rem;
+  display: flex;
+  margin: 0.75rem 0 0 auto;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  z-index: 1;
+}
+
 .result {
   padding: 1.75rem;
   border: 1px solid var(--border);

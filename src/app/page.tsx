@@ -1,4 +1,4 @@
-import { AgentWorkspace } from "@/components/AgentWorkspace";
+import { LiveAgentWorkspace } from "@/components/LiveAgentWorkspace";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
           觀察 Agent 如何探索 Repository、呼叫工具，並根據每一輪的觀察結果決定下一步。
         </p>
       </header>
-      <AgentWorkspace />
+      <LiveAgentWorkspace />
     </main>
   );
 }

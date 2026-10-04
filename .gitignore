@@ -8,6 +8,7 @@
 
 # Local environment and credentials
 .env*
+!.env.example
 *.pem
 /.aws/
 

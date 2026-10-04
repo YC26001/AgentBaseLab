@@ -46,6 +46,7 @@ export type FinalAnswerView = {
 
 export type ErrorResultView = {
   kind: "error";
+  heading?: string;
   message: string;
   explanation?: string;
   technicalDetails?: string;

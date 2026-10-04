@@ -41,7 +41,7 @@ export function Result({
         </>
       ) : (
         <>
-          <h3 className={styles.terminationHeading}>執行已終止</h3>
+          <h3 className={styles.terminationHeading}>{result.heading ?? "執行已終止"}</h3>
           <p className={styles.errorMessage}>{result.message}</p>
           {result.explanation && <p className={styles.errorExplanation}>{result.explanation}</p>}
           {result.technicalDetails && (

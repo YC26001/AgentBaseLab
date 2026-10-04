@@ -34,16 +34,11 @@
   letter-spacing: -0.02em;
 }
 
-.sectionNote,
 .fieldCaption,
 .formHelp,
 .secondaryText {
   color: var(--muted);
   font-size: 0.8rem;
-}
-
-.sectionNote {
-  text-align: right;
 }
 
 .fieldCaption {
@@ -113,14 +108,14 @@
 .formFooter {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1.25rem;
   margin-top: 1rem;
 }
 
 .formHelp {
   max-width: 410px;
-  margin: 0;
+  margin: 0 auto 0 0;
 }
 
 .runButton {
@@ -217,7 +212,7 @@
 }
 
 .statusBadge[data-status="running"] .statusDot {
-  animation: pulse 1.6s ease-in-out infinite;
+  animation: pulse 1.3s ease-in-out infinite;
 }
 
 .iterationList {
@@ -308,6 +303,20 @@
 .secondaryText {
   margin: 0.4rem 0 0;
   overflow-wrap: anywhere;
+}
+
+.loadingDots {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Reserve all three dots' width; reveal the second and third in discrete steps. */
+.loadingDots span:nth-child(2) {
+  animation: secondDot 1.5s step-end infinite;
+}
+
+.loadingDots span:nth-child(3) {
+  animation: thirdDot 1.5s step-end infinite;
 }
 
 .toolName {
@@ -530,7 +539,27 @@
 }
 
 @keyframes pulse {
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes secondDot {
+  0% { opacity: 0; }
+  33.333%, 100% { opacity: 1; }
+}
+
+@keyframes thirdDot {
+  0% { opacity: 0; }
+  66.667%, 100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusBadge[data-status="running"] .statusDot,
+  .loadingDots span {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 540px) {
@@ -539,14 +568,14 @@
     padding: 1.25rem;
   }
 
-  .sectionNote {
-    display: none;
-  }
-
   .formFooter {
     align-items: stretch;
     flex-direction: column;
     gap: 0.85rem;
+  }
+
+  .formHelp {
+    margin: 0;
   }
 
   .traceHeading {

@@ -41,7 +41,7 @@ export function QuestionForm({
           ? "Agent 忙碌中，請等候目前的執行結束。"
           : integrationPending
             ? "目前尚未開放即時執行，你可以先準備問題。"
-            : "Agent 會使用唯讀工具分析固定的示範 Repository。"
+            : undefined
   );
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -53,7 +53,6 @@ export function QuestionForm({
     <section className={styles.questionPanel} aria-labelledby={`${id}-heading`}>
       <div className={styles.sectionHeading}>
         <h2 id={`${id}-heading`}>問題</h2>
-        <span className={styles.sectionNote}>從一個問題開始</span>
       </div>
       <form onSubmit={submit}>
         <p className={styles.fieldCaption}>推薦問題</p>
@@ -83,22 +82,24 @@ export function QuestionForm({
           name="question"
           className={styles.questionInput}
           rows={3}
-          placeholder="輸入你想了解的示範 Repository 問題…"
+          placeholder="輸入你想了解的問題，Agent 會使用唯讀工具分析固定的示範 Repository"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
-          aria-describedby={helpId}
+          aria-describedby={help ? helpId : undefined}
           disabled={locked}
           required
         />
         <div className={styles.formFooter}>
-          <p id={helpId} className={styles.formHelp} role="status">
-            {help}
-          </p>
+          {help && (
+            <p id={helpId} className={styles.formHelp} role="status">
+              {help}
+            </p>
+          )}
           <button
             type="submit"
             className={styles.runButton}
             disabled={!canRun}
-            aria-describedby={helpId}
+            aria-describedby={help ? helpId : undefined}
           >
             執行 Agent <span aria-hidden="true">→</span>
           </button>

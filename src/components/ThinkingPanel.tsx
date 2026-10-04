@@ -14,7 +14,15 @@ export function ThinkingPanel({
   return (
     <div className={styles.thinking}>
       <p className={styles.stepLabel}>模型</p>
-      {generating && <p className={styles.secondaryText}>正在產生決策…</p>}
+      {generating && (
+        <p className={styles.secondaryText}>
+          正在產生決策
+          <span className={styles.loadingDots} aria-hidden="true">
+            <span>.</span><span>.</span><span>.</span>
+          </span>
+          <span className={styles.srOnly}>...</span>
+        </p>
+      )}
       {thinking?.text && (
         <Disclosure label="查看模型推論">
           <pre className={styles.thinkingText} tabIndex={0} aria-label="模型推論">

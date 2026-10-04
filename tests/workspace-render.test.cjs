@@ -8,6 +8,8 @@ const { renderToStaticMarkup } = require("react-dom/server");
 require.extensions[".css"] = module => { module.exports = {}; };
 const { LiveAgentWorkspace } = require("../src/components/LiveAgentWorkspace.tsx");
 const { AgentWorkspace } = require("../src/components/AgentWorkspace.tsx");
+const { QuestionForm } = require("../src/components/QuestionForm.tsx");
+const { ThinkingPanel } = require("../src/components/ThinkingPanel.tsx");
 const { applyCoreEvent, createRunningRun } = require("../src/agent/run-state.ts");
 const render = props => renderToStaticMarkup(React.createElement(AgentWorkspace, props));
 
@@ -18,6 +20,41 @@ test("live initial UI is ready for input with no trace/result or integration-pen
   assert(!html.includes("執行軌跡"));
   assert(!html.includes("最終回答"));
   assert(!html.includes("錯誤結果"));
+  assert(html.includes('placeholder="輸入你想了解的問題，Agent 會使用唯讀工具分析固定的示範 Repository"'));
+  assert(!html.includes("從一個問題開始"));
+  assert(!html.includes("Agent 會使用唯讀工具分析固定的示範 Repository。"));
+  assert(!html.includes('role="status"'));
+  assert(!html.includes("aria-describedby"), "idle form must not reference a removed help element");
+});
+
+test("form status messages remain available after removing idle help", () => {
+  for (const [props, message] of [
+    [{ availability: "ready", submitting: true }, "正在連線 Agent Core…"],
+    [{ availability: "ready", running: true }, "Agent 執行中，可在下方查看執行軌跡。"],
+    [{ availability: "busy" }, "Agent 忙碌中，請等候目前的執行結束。"],
+    [{ availability: "pending" }, "目前尚未開放即時執行，你可以先準備問題。"],
+  ]) {
+    const html = renderToStaticMarkup(React.createElement(QuestionForm, {
+      running: false, onRun() {}, ...props,
+    }));
+    assert(html.includes(message));
+    assert(html.includes('role="status"'));
+    const helpId = html.match(/<p id="([^"]+)"[^>]*role="status"/)[1];
+    assert(html.includes(`aria-describedby="${helpId}"`));
+  }
+});
+
+test("decision loading dots exist only while generating and stay hidden from assistive technology", () => {
+  const loading = renderToStaticMarkup(React.createElement(ThinkingPanel, { generating: true }));
+  assert(loading.includes("正在產生決策"));
+  assert.match(loading, /<span[^>]*aria-hidden="true"><span>\.<\/span><span>\.<\/span><span>\.<\/span><\/span>/);
+  assert(loading.includes("<span>...</span>"), "screen readers receive stable, non-animated punctuation");
+  assert.equal(renderToStaticMarkup(React.createElement(ThinkingPanel, { generating: false })), "");
+  const completed = renderToStaticMarkup(React.createElement(ThinkingPanel, {
+    generating: false, thinking: { text: "已收到的推論" },
+  }));
+  assert(completed.includes("已收到的推論"));
+  assert(!completed.includes("正在產生決策"));
 });
 
 test("HTTP rejection notices stay in the question area without an execution group", () => {

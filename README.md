@@ -1,7 +1,7 @@
 # AgentBaseLab-Core
 
 AgentBaseLab-Core 是一個為理解 AI Agent 核心機制而自行實作的 Learning Project。
-目前提供 CLI，讓使用者提出 repository analysis 問題，由本機 Model 自行選擇工具、
+目前提供 CLI 與 Local HTTP API，讓使用者提出 repository analysis 問題，由本機 Model 自行選擇工具、
 讀取測試專案，並根據取得的資料回答。
 
 專案自行實作 Model integration、Agent Loop、Tool Calling、Context / Message History、
@@ -46,6 +46,7 @@ AgentAction（JSON）
 - **Execution Events**：透過 callback 即時提供 iteration、thinking delta、Tool 開始／成功完成、完整 final answer 與有限資訊的 error；content JSON 不對外逐段提供。
 - **Iteration Limit**：最多 8 輪 Model 呼叫，超過限制時停止並報錯。
 - **CLI**：接受 command line 問題，顯示簡短 action sequence 與最終回答；失敗時回傳非零 exit code。
+- **Local HTTP API**：使用 Node.js built-in `node:http`，將既有 Execution Events 即時以 NDJSON 提供給 consumer；同時只允許一個 Agent run。
 
 ## 技術
 
@@ -124,6 +125,80 @@ Tool 失敗時送出 `tool_started → error`，保留 failure trace 並拋出 `
 一般 error event 不包含 raw Model JSON、檔案內容或詳細 diagnostics；
 技術錯誤沿用 bounded diagnostics，由 Core `console.error()` 與 Error／trace 保留。
 
+## Phase 5B Local HTTP API
+
+從 repository 根目錄啟動：
+
+```bash
+npm run api
+```
+
+預設只綁定 `127.0.0.1:3001`，`PORT` 可設定為 1–65535 的整數。
+`WEB_ORIGIN` 預設為 `http://localhost:3000`，需填寫與 Browser Origin 完全相符的值，
+例如 `http://localhost:3000` 與 `http://127.0.0.1:3000` 是不同 origin。
+
+```bash
+PORT=3002 WEB_ORIGIN=http://localhost:4321 npm run api
+```
+
+API contract：
+
+| 項目 | 格式 |
+| --- | --- |
+| Method / path | `POST /api/agent/run` |
+| Request Content-Type | `application/json`，可附 `charset=utf-8` |
+| Request body | `{ "question": "分析這個專案主要在做什麼" }` |
+| Streaming status | `200` |
+| Response Content-Type | `application/x-ndjson; charset=utf-8` |
+| Record framing | `JSON.stringify(AgentExecutionEvent) + "\n"` |
+
+question 必須是非空 string，trim 後交給 Agent。HTTP request body 上限為 64 KiB；
+超限回傳 `400 INVALID_REQUEST`，不啟動 Agent。
+
+使用真實 Ollama 驗證（需與 API 使用不同 terminal）：
+
+```bash
+curl -N \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"分析這個專案主要在做什麼"}' \
+  http://127.0.0.1:3001/api/agent/run
+```
+
+每個 Phase 5A event 在發生時直接寫入 HTTP response，未等待整個 run 完成才回傳。
+HTTP transport 不建立第二套 events，也不增加 `done`／`completed`／`stream_completed`。
+final event 正常寫入後，等待 `runAgent()` 完成才結束 response。
+
+錯誤行為：
+
+- Streaming 前的 invalid Content-Type／JSON／question／body size 回傳 `400` JSON：
+  `{ "error": { "code": "INVALID_REQUEST", "message": "..." } }`。
+- 有 active run 時，有效的新 request 回傳 `409` JSON：
+  `{ "error": { "code": "AGENT_BUSY", "message": "An agent run is already in progress." } }`。
+- 執行開始後的 Core failure 保持 `200` NDJSON，送出 Core 原本的 `error` event 一次，
+  `AgentExecutionError` 後結束 response，不額外傳 diagnostics 或 stack。
+- 若發生未提供 terminal event 的 unexpected execution failure，直接中斷連線；
+  consumer 應把 transport error 或缺少 final／error 的 EOF 判為失敗。
+- 其他 path 回傳 `404 NOT_FOUND`；非 POST／OPTIONS method 回傳 `405 METHOD_NOT_ALLOWED`。
+
+busy state 在 execution 的 `finally` 釋放，包含 final、Core error 與 unexpected failure。
+Browser disconnect 後停止向已關閉的 response 寫入，Agent 繼續執行；
+busy 直到實際 execution 結束才釋放，未加入 cancellation／Stop 功能。
+
+CORS 只對符合 `WEB_ORIGIN` 的 Origin 回傳 `Access-Control-Allow-Origin`，不使用 wildcard。
+`OPTIONS /api/agent/run` 回傳 `204`，允許 `POST, OPTIONS` 與 `Content-Type`，不啟動 Agent。
+CORS 是 Browser 的跨來源讀取規則，沒有實作 authentication。
+
+未來 Browser consumer 的讀取 contract 為 `fetch()` → `response.body`／ReadableStream
+→ streaming TextDecoder → pending text buffer → 依 `\n` 切完整 records → `JSON.parse(line)`。
+HTTP chunk 不一定對應一個 event；同一 chunk 可包含多個 records，一個 record 也可跨 chunks。
+consumer 應先檢查 status／Content-Type：400／409 是 JSON，200 才是 NDJSON。
+Web parser 與 UI implementation 留在後續 `AgentBaseLab-Web` integration。
+
+`createAgentServer({ runAgent?, webOrigin? })` 與 process startup 分離；tests 可注入最小 fake Agent，
+驗證即時 streaming、錯誤、busy、CORS 與 disconnect，主要測試不依賴真實 Ollama。
+`npm test` 同時執行 Phase 4、5A 與 5B tests，HTTP tests 需要允許本機 loopback socket。
+Transport 使用 Node.js [HTTP API](https://nodejs.org/docs/latest-v24.x/api/http.html)，未新增 dependency。
+
 ## Demo 範例
 
 以下是一種可能的流程，實際 Tool 順序、輪數與回答文字由 Model 決定：
@@ -153,4 +228,4 @@ Tool 失敗時送出 `tool_started → error`，保留 failure trace 並拋出 `
 - content 是 AgentAction JSON protocol，累積完整後才解析；沒有 `model_content_delta`、`model_completed` 或 final answer token streaming。Model 或 Tool 出錯時直接停止。
 - Structured Execution Trace 儲存在單次執行的記憶體中；成功時回傳，失敗時保留在錯誤物件的 `trace`，不寫入檔案。
 - 本機 Ollama 推論速度依硬體與模型而異。
-- Phase 5A 僅提供 Core execution data；尚未建立 HTTP API、Web UI 或 persistence。
+- Local API 提供 Phase 5A execution data；尚未建立 Web UI、remote access 或 persistence。

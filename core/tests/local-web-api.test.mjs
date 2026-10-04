@@ -55,6 +55,37 @@ async function successfulRun(_question, _onTrace, onEvent) {
   return { answer: finalEvent.answer, trace: [] };
 }
 
+test("health probes stay available during a run without acquiring or releasing busy", async (t) => {
+  const release = deferred();
+  let reading;
+  t.after(async () => { release.resolve(); await reading; });
+  let calls = 0;
+  const { url } = await startServer(t, { runAgent: async (...args) => {
+    calls++;
+    args[2]({ type: "iteration_started", iteration: 1 });
+    await release.promise;
+    args[2](finalEvent);
+    return { answer: finalEvent.answer, trace: [] };
+  } });
+  const healthUrl = url.replace("/api/agent/run", "/health");
+  for (const running of [false, true]) {
+    const probe = await request(healthUrl, "", { method: "GET" });
+    assert.equal(probe.statusCode, 200);
+    assert.deepEqual(JSON.parse(await text(probe)), { status: "ok" });
+    assert.equal(calls, running ? 1 : 0);
+    if (!running) {
+      const active = await request(url);
+      reading = events(active);
+    }
+  }
+  const busy = await request(url);
+  assert.equal(busy.statusCode, 409);
+  await text(busy);
+  assert.equal(calls, 1);
+  release.resolve();
+  assert.equal((await reading).at(-1).type, "final");
+});
+
 test("HTTP streams unchanged Core events before run completion and ends only after runAgent resolves", { timeout: 5000 }, async (t) => {
   const continueRun = deferred();
   const finishRun = deferred();

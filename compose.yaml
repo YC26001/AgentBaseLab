@@ -1,0 +1,76 @@
+name: agentbaselab
+
+services:
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "OLLAMA_HOST=http://127.0.0.1:11434 ollama list >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  ollama-init:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:12b}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - 'ollama show "$$OLLAMA_MODEL" >/dev/null 2>&1 || ollama pull "$$OLLAMA_MODEL"'
+
+  core:
+    build:
+      context: ./core
+    restart: unless-stopped
+    init: true
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3001"
+      WEB_ORIGIN: http://${APP_HOST:-localhost}:${WEB_PORT:-3000}
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:12b}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${CORE_PORT:-3001}:3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  web:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_AGENT_CORE_BASE_URL: http://${APP_HOST:-localhost}:${CORE_PORT:-3001}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      core:
+        condition: service_healthy
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  ollama-data:

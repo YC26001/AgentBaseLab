@@ -69,6 +69,29 @@ test("Ollama accumulates thinking/content across NDJSON, JSON and UTF-8 byte bou
   assert.equal(requests[0].format, "json");
 });
 
+test("Ollama uses the configured service URL and model while preserving the stream protocol", async (t) => {
+  const previousUrl = process.env.OLLAMA_BASE_URL;
+  const previousModel = process.env.OLLAMA_MODEL;
+  t.after(() => {
+    if (previousUrl === undefined) delete process.env.OLLAMA_BASE_URL;
+    else process.env.OLLAMA_BASE_URL = previousUrl;
+    if (previousModel === undefined) delete process.env.OLLAMA_MODEL;
+    else process.env.OLLAMA_MODEL = previousModel;
+  });
+  process.env.OLLAMA_BASE_URL = "http://ollama:11434/";
+  process.env.OLLAMA_MODEL = "configured-model";
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.equal(url, "http://ollama:11434/api/chat");
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, "configured-model");
+    assert.equal(body.think, true);
+    assert.equal(body.stream, true);
+    assert.equal(body.format, "json");
+    return streamResponse(turn(final));
+  });
+  assert.equal((await callModel([], "json")).content, JSON.stringify(final));
+});
+
 test("Ollama accepts a terminal record without a message or trailing newline", async (t) => {
   t.mock.method(globalThis, "fetch", async () => streamResponse([
     chunk({ content: JSON.stringify(final) }),

@@ -68,6 +68,14 @@ export function createAgentServer(options: ServerOptions = {}): Server {
       response.setHeader("Access-Control-Allow-Origin", webOrigin);
     }
 
+    // Liveness checks must not acquire the Agent run or call Ollama.
+    if (request.url === "/health" && request.method === "GET") {
+      request.resume();
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      response.end(JSON.stringify({ status: "ok" }));
+      return;
+    }
+
     if (request.url !== "/api/agent/run") {
       request.resume();
       sendError(response, 404, "NOT_FOUND", "Endpoint not found.");

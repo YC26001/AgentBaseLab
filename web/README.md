@@ -2,6 +2,10 @@
 
 AgentBaseLab 的 Web frontend，使用 Next.js、React、TypeScript、App Router、npm 與 ESLint。
 
+整套服務的 Docker Compose 操作請參閱[專案 README](../README.md#docker-compose)。
+Web Docker image 使用 Next.js standalone output，以 production server 啟動。
+Compose 在 image 建置時設定 `NEXT_PUBLIC_AGENT_CORE_BASE_URL`。
+
 單頁、單欄的繁體中文 Web UI，透過 Core 的 HTTP API / NDJSON Execution Events 執行真正的 Repository 分析。Agent runtime、Ollama integration 與 tools 位於本專案的 `core/` 目錄。端到端驗證需要本機 Core 與 Ollama。
 
 ## 開發

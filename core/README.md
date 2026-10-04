@@ -134,6 +134,9 @@ npm run api
 ```
 
 預設只綁定 `127.0.0.1:3001`，`PORT` 可設定為 1–65535 的整數。
+`HOST` 可調整監聽位址；Docker image 預設使用 `0.0.0.0`。
+`OLLAMA_BASE_URL` 預設為 `http://localhost:11434`，`OLLAMA_MODEL` 預設為 `gemma4:12b`；
+Docker Compose 會將 Ollama 位址設定為 `http://ollama:11434`。
 `WEB_ORIGIN` 預設為 `http://localhost:3000`，需填寫與 Browser Origin 完全相符的值，
 例如 `http://localhost:3000` 與 `http://127.0.0.1:3000` 是不同 origin。
 
@@ -142,6 +145,9 @@ PORT=3002 WEB_ORIGIN=http://localhost:4321 npm run api
 ```
 
 API contract：
+
+`GET /health` 回傳 `200` 與 `{ "status": "ok" }`，供容器健康檢查使用。
+它只檢查 API 存活，不呼叫 Ollama 或啟動 Agent，執行中的 Agent 也不影響 health 回應。
 
 | 項目 | 格式 |
 | --- | --- |

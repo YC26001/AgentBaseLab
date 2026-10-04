@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc --outDir dist",
     "test": "node --import tsx --test --test-isolation=none tests/*.test.mjs",
     "agent": "tsx src/index.ts",
     "api": "tsx src/server/index.ts",

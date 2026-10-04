@@ -25,21 +25,19 @@ export class ModelStreamError extends Error {
   }
 }
 
-const OLLAMA_URL = "http://localhost:11434/api/chat";
-const MODEL = "gemma4:12b";
-
 export async function callModel(
   messages: Message[],
   format?: "json",
   onThinkingDelta?: (delta: string) => void
 ): Promise<ModelResponse> {
-  const response = await fetch(OLLAMA_URL, {
+  const ollamaUrl = new URL("/api/chat", process.env.OLLAMA_BASE_URL ?? "http://localhost:11434").toString();
+  const response = await fetch(ollamaUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: process.env.OLLAMA_MODEL ?? "gemma4:12b",
       messages,
       think: true,
       stream: true,

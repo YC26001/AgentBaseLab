@@ -1,8 +1,105 @@
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+:root {
+  --page: #f6f5f2;
+  --surface: #ffffff;
+  --surface-subtle: #fafaf8;
+  --ink: #252823;
+  --muted: #646860;
+  --border: #dddeda;
+  --accent: #365c47;
+  --error: #943b36;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
 }
 
-main {
-  padding: 2rem;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.app-shell {
+  width: min(100% - 3rem, 800px);
+  margin: 0 auto;
+  padding: 4rem 0 5rem;
+}
+
+.project-header {
+  margin-bottom: 2.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.project-header h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.3rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+}
+
+.project-description {
+  max-width: 620px;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 540px) {
+  .app-shell {
+    width: calc(100% - 2rem);
+    padding-top: 2rem;
+  }
+
+  .project-header {
+    margin-bottom: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

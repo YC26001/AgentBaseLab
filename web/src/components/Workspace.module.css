@@ -1,0 +1,612 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  min-width: 0;
+}
+
+.questionPanel {
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.sectionHeading,
+.traceHeading,
+.toolHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sectionHeading {
+  margin-bottom: 1.25rem;
+}
+
+.sectionHeading h2,
+.traceHeading h2,
+.result h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.fieldCaption,
+.formHelp,
+.secondaryText {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.fieldCaption {
+  margin: 0 0 0.55rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.chip {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-subtle);
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.chip:hover:not(:disabled),
+.chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: #f0f4ef;
+}
+
+.chip:disabled {
+  color: var(--muted);
+}
+
+.inputLabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.questionInput {
+  display: block;
+  width: 100%;
+  min-height: 110px;
+  padding: 0.85rem 1rem;
+  resize: vertical;
+  border: 1px solid #c5c9c1;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.questionInput::placeholder {
+  color: #73786f;
+}
+
+.questionInput:disabled {
+  background: var(--surface-subtle);
+  color: var(--muted);
+}
+
+.formFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.formHelp {
+  max-width: 410px;
+  margin: 0 auto 0 0;
+}
+
+.runButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  background: var(--ink);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 120ms ease;
+}
+
+.runButton:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+.runButton:disabled {
+  border-color: var(--border);
+  background: #e8e9e4;
+  color: #686d63;
+}
+
+.trace {
+  min-width: 0;
+  scroll-margin-top: 1.5rem;
+}
+
+.traceHeading {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.traceToggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+}
+
+.iterationCount {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.chevron {
+  display: inline-block;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: transform 120ms ease;
+}
+
+.chevron[data-expanded="true"] {
+  transform: rotate(90deg);
+}
+
+.statusBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.statusBadge[data-status="success"] {
+  color: var(--accent);
+}
+
+.statusBadge[data-status="error"] {
+  color: var(--error);
+}
+
+.statusBadge[data-status="running"] .statusDot {
+  animation: pulse 1.3s ease-in-out infinite;
+}
+
+.iterationList {
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.iteration {
+  position: relative;
+  padding-left: 3.2rem;
+  padding-bottom: 1.75rem;
+}
+
+.iteration::before {
+  position: absolute;
+  top: 2rem;
+  bottom: 0;
+  left: 0.95rem;
+  width: 1px;
+  background: var(--border);
+  content: "";
+}
+
+.iteration:last-child {
+  padding-bottom: 0;
+}
+
+.iteration:last-child::before {
+  bottom: 0.5rem;
+}
+
+.iterationHeading {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 0 0 1rem -3.2rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.iterationNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0;
+}
+
+.iterationBody {
+  padding: 1.2rem 1.3rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.stepLabel {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.thinking {
+  margin-bottom: 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eceee8;
+}
+
+.thinking:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.secondaryText {
+  margin: 0.4rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.loadingDots {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Reserve all three dots' width; reveal the second and third in discrete steps. */
+.loadingDots span:nth-child(2) {
+  animation: secondDot 1.5s step-end infinite;
+}
+
+.loadingDots span:nth-child(3) {
+  animation: thirdDot 1.5s step-end infinite;
+}
+
+.toolName {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.toolCall,
+.observation {
+  min-width: 0;
+}
+
+.toolPath {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.connector {
+  margin: 0.75rem 0;
+  color: #737b6e;
+  line-height: 1;
+}
+
+.observationSummary {
+  margin: 0;
+  font-size: 0.87rem;
+}
+
+.technicalMetadata {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
+.fileList {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  line-height: 1.9;
+}
+
+.fileList code {
+  font-family: var(--mono);
+  overflow-wrap: anywhere;
+}
+
+.disclosure {
+  margin-top: 0.5rem;
+}
+
+.disclosureButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 32px;
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.disclosureButton:hover {
+  color: var(--ink);
+}
+
+.disclosureContent {
+  min-width: 0;
+  padding-top: 0.5rem;
+}
+
+.codeBlock,
+.thinkingText,
+.scrollContent {
+  max-height: 280px;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface-subtle);
+}
+
+.codeBlock {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.thinkingText {
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.83rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.traceError {
+  margin-top: 1rem;
+  color: var(--error);
+}
+
+.traceError p:last-child {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.handoff {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.7;
+}
+
+.latestExecution {
+  scroll-margin-block: 2rem;
+}
+
+.followButton {
+  position: sticky;
+  bottom: 1rem;
+  display: flex;
+  margin: 0.75rem 0 0 auto;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.result {
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: 4px;
+  background: var(--surface);
+  scroll-margin-top: 2rem;
+  overflow-wrap: anywhere;
+}
+
+.result h2 {
+  font-size: 1.2rem;
+}
+
+.resultQuestion {
+  margin: 1.5rem 0;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.resultQuestion h3,
+.resultSubheading {
+  margin: 0 0 0.45rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.resultQuestion p {
+  margin: 0;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.answerText {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.85;
+  white-space: pre-wrap;
+}
+
+.inspectedFiles {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.errorResult {
+  border-top-color: var(--error);
+}
+
+.terminationHeading {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.errorMessage {
+  margin: 0;
+  color: var(--error);
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+}
+
+.errorExplanation {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes secondDot {
+  0% { opacity: 0; }
+  33.333%, 100% { opacity: 1; }
+}
+
+@keyframes thirdDot {
+  0% { opacity: 0; }
+  66.667%, 100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusBadge[data-status="running"] .statusDot,
+  .loadingDots span {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 540px) {
+  .questionPanel,
+  .result {
+    padding: 1.25rem;
+  }
+
+  .formFooter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .formHelp {
+    margin: 0;
+  }
+
+  .traceHeading {
+    align-items: flex-start;
+  }
+
+  .traceToggle {
+    gap: 0.4rem;
+  }
+
+  .iterationCount {
+    flex-basis: 100%;
+    margin-left: 1rem;
+  }
+
+  .iteration {
+    padding-left: 2.6rem;
+  }
+
+  .iterationHeading {
+    gap: 0.65rem;
+    margin-left: -2.6rem;
+  }
+
+  .iterationBody {
+    padding: 1rem;
+  }
+
+  .toolHeading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

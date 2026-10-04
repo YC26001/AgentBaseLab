@@ -1,17 +1,19 @@
-# AgentBaseLab-Web
+# AgentBaseLab Web
 
-AgentBaseLab 的獨立 Web frontend repository，使用 Next.js、React、TypeScript、App Router、npm 與 ESLint。
+AgentBaseLab 的 Web frontend，使用 Next.js、React、TypeScript、App Router、npm 與 ESLint。
 
-單頁、單欄的繁體中文 Web UI，透過 AgentBaseLab-Core Phase 5B 的 HTTP API / NDJSON Execution Events 執行真正的 Repository 分析。Agent runtime、Ollama 與 tools 留在獨立的 Core repository。端到端驗證需要本機 Core 與 Ollama。
+單頁、單欄的繁體中文 Web UI，透過 Core 的 HTTP API / NDJSON Execution Events 執行真正的 Repository 分析。Agent runtime、Ollama integration 與 tools 位於本專案的 `core/` 目錄。端到端驗證需要本機 Core 與 Ollama。
 
 ## 開發
+
+從本專案的 `web/` 目錄執行：
 
 ```bash
 npm install
 npm run dev
 ```
 
-在另一個 terminal 啟動已完成 Phase 5B 的 AgentBaseLab-Core（於 Core repository 執行 `npm run api`），並確認 Ollama 可用。Web 開啟 http://localhost:3000。首頁位於 `src/app/page.tsx`，`@/*` 對應 `src/*`。
+在另一個 terminal，於本專案的 `core/` 目錄執行 `npm run api`，並確認 Ollama 可用。Web 開啟 http://localhost:3000。首頁位於 `src/app/page.tsx`，`@/*` 對應 `src/*`。
 
 ## Core URL 與 CORS
 
@@ -25,7 +27,7 @@ NEXT_PUBLIC_AGENT_CORE_BASE_URL=http://127.0.0.1:3001
 
 `NEXT_PUBLIC_` 值會進入 browser bundle：修改後需重啟 dev server，production 需重新 build。`.env.example` 可追蹤，`.env.local` 被忽略。
 
-Browser 直接 POST Core，不經 Next.js backend。Core 的 `WEB_ORIGIN` 必須與 Web 的完整 origin 相同；Core 預設為 `http://localhost:3000`。若改用 `http://127.0.0.1:3000` 或其他 port，請在啟動 Core 時設定相應的 `WEB_ORIGIN`。本 Web repo 不修改 Core contract 或 CORS 規則。
+Browser 直接 POST Core，不經 Next.js backend。Core 的 `WEB_ORIGIN` 必須與 Web 的完整 origin 相同；Core 預設為 `http://localhost:3000`。若改用 `http://127.0.0.1:3000` 或其他 port，請在啟動 Core 時設定相應的 `WEB_ORIGIN`。
 
 ## 驗證
 

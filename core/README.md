@@ -1,6 +1,6 @@
-# AgentBaseLab-Core
+# AgentBaseLab Core
 
-AgentBaseLab-Core 是一個為理解 AI Agent 核心機制而自行實作的 Learning Project。
+Core 是 AgentBaseLab 的核心 API 與 Agent runtime，用來理解 AI Agent 核心機制。
 目前提供 CLI 與 Local HTTP API，讓使用者提出 repository analysis 問題，由本機 Model 自行選擇工具、
 讀取測試專案，並根據取得的資料回答。
 
@@ -63,7 +63,7 @@ AgentAction（JSON）
 - 已安裝並啟動 Ollama，服務可透過 `http://localhost:11434` 存取。
 - 本機已具備 `gemma4:12b`，可使用 `ollama list` 確認。
 
-從 AgentBaseLab-Core 根目錄執行：
+從本專案的 `core/` 目錄執行：
 
 ```bash
 npm install
@@ -127,7 +127,7 @@ Tool 失敗時送出 `tool_started → error`，保留 failure trace 並拋出 `
 
 ## Phase 5B Local HTTP API
 
-從 repository 根目錄啟動：
+從本專案的 `core/` 目錄啟動：
 
 ```bash
 npm run api
@@ -192,7 +192,7 @@ CORS 是 Browser 的跨來源讀取規則，沒有實作 authentication。
 → streaming TextDecoder → pending text buffer → 依 `\n` 切完整 records → `JSON.parse(line)`。
 HTTP chunk 不一定對應一個 event；同一 chunk 可包含多個 records，一個 record 也可跨 chunks。
 consumer 應先檢查 status／Content-Type：400／409 是 JSON，200 才是 NDJSON。
-Web parser 與 UI implementation 留在後續 `AgentBaseLab-Web` integration。
+Web parser 與 UI implementation 位於本專案的 `web/` 目錄。
 
 `createAgentServer({ runAgent?, webOrigin? })` 與 process startup 分離；tests 可注入最小 fake Agent，
 驗證即時 streaming、錯誤、busy、CORS 與 disconnect，主要測試不依賴真實 Ollama。
@@ -228,4 +228,4 @@ Transport 使用 Node.js [HTTP API](https://nodejs.org/docs/latest-v24.x/api/htt
 - content 是 AgentAction JSON protocol，累積完整後才解析；沒有 `model_content_delta`、`model_completed` 或 final answer token streaming。Model 或 Tool 出錯時直接停止。
 - Structured Execution Trace 儲存在單次執行的記憶體中；成功時回傳，失敗時保留在錯誤物件的 `trace`，不寫入檔案。
 - 本機 Ollama 推論速度依硬體與模型而異。
-- Local API 提供 Phase 5A execution data；尚未建立 Web UI、remote access 或 persistence。
+- Local API 提供 Phase 5A execution data，Web UI 位於 `../web/`；尚未提供 remote access 或 persistence。
